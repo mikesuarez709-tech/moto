@@ -2,7 +2,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from mysql.connector import Error
 
-from database.db_connection import execute, rows
+from database.db_connection import execute, row, rows
 from routes.common import Invalid, field, get_or_404, notify_error, pager, pattern, roles, search
 
 bp = Blueprint("customers", __name__, url_prefix="/customers")
@@ -47,6 +47,9 @@ def form(ident=None):
 @roles("admin", "cashier")
 def details(ident):
     customer = get_or_404("SELECT * FROM customers WHERE id=%s", (ident,))
+    portal_account = row(
+        "SELECT id,username,active FROM customer_accounts WHERE customer_id=%s", (ident,)
+    ) if current_user.role == "admin" else None
     bikes = rows("SELECT * FROM motorcycles WHERE customer_id=%s ORDER BY id DESC", (ident,))
     limited = current_user.role == "cashier"
     sales, pagination = pager(
@@ -60,4 +63,4 @@ def details(ident):
         (ident,),
     ) if not limited else []
     return render_template("customers/details.html", title=customer["name"], customer=customer, bikes=bikes,
-                           sales=sales, jobs=jobs, pagination=pagination)
+                           sales=sales, jobs=jobs, pagination=pagination, portal_account=portal_account)

@@ -44,6 +44,19 @@ CREATE TABLE IF NOT EXISTS users (
     CHECK ((role = 'mechanic') = (mechanic_id IS NOT NULL))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS customer_accounts (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    customer_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    username VARCHAR(80) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    session_version INT UNSIGNED NOT NULL DEFAULT 1,
+    failed_attempts INT UNSIGNED NOT NULL DEFAULT 0,
+    locked_until DATETIME,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS categories (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(90) NOT NULL UNIQUE
@@ -92,6 +105,21 @@ CREATE TABLE IF NOT EXISTS services (
     INDEX (created_at),
     INDEX (status, updated_at),
     INDEX (mechanic_id, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS service_requests (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    request_key CHAR(32) NOT NULL UNIQUE,
+    customer_id BIGINT UNSIGNED NOT NULL,
+    motorcycle_id BIGINT UNSIGNED NOT NULL,
+    service_type VARCHAR(100) NOT NULL,
+    description VARCHAR(2000) NOT NULL,
+    status ENUM('Pending','Reviewed','Declined') NOT NULL DEFAULT 'Pending',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(id),
+    FOREIGN KEY (motorcycle_id) REFERENCES motorcycles(id),
+    INDEX (status, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS service_details (

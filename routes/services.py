@@ -64,6 +64,35 @@ def billing():
                            query=query)
 
 
+@bp.get("/requests")
+@roles("admin", "cashier")
+def requests_index():
+    entries, pagination = pager(
+        "SELECT r.*,c.name AS customer,c.phone,CONCAT(m.brand,' ',m.model) AS motorcycle,m.plate "
+        "FROM service_requests r JOIN customers c ON c.id=r.customer_id "
+        "JOIN motorcycles m ON m.id=r.motorcycle_id ORDER BY r.id DESC"
+    )
+    return render_template(
+        "services/requests.html", title="Customer requests", entries=entries, pagination=pagination,
+    )
+
+
+@bp.post("/requests/<int:ident>")
+@roles("admin", "cashier")
+def review_request(ident):
+    try:
+        target = choice("status", ("Reviewed", "Declined"))
+        with atomic():
+            service_request = get_or_404("SELECT status FROM service_requests WHERE id=%s FOR UPDATE", (ident,))
+            if service_request["status"] != "Pending":
+                raise Invalid("Only pending requests can be updated.")
+            execute("UPDATE service_requests SET status=%s,updated_at=NOW() WHERE id=%s", (target, ident))
+        flash("Customer request updated.", "success")
+    except (Invalid, Error) as error:
+        notify_error(error)
+    return redirect(url_for("services.requests_index"))
+
+
 @bp.post("/<int:ident>/payment")
 @roles("admin", "cashier")
 def collect(ident):

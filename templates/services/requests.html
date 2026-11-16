@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, header, csrf, tag, empty, pagination as pages %}
+{% block content %}
+<div class="page-heading">{{ header('Customer requests','Review service requests submitted from the customer portal.') }}</div>
+<section class="panel">
+  {% if entries %}
+  <div class="table-scroll"><table><thead><tr><th>Customer</th><th>Contact</th><th>Motorcycle</th><th>Request</th><th>Details</th><th>Submitted</th><th>Status</th><th>Action</th></tr></thead><tbody>
+  {% for item in entries %}
+  <tr>
+    <td><strong>{{ item.customer }}</strong></td><td>{{ item.phone }}</td>
+    <td>{{ item.motorcycle }}{% if item.plate %}<small>{{ item.plate }}</small>{% endif %}</td>
+    <td>{{ item.service_type }}</td><td>{{ item.description or '—' }}</td><td>{{ item.created_at|shortdate }}</td>
+    <td>{{ tag(item.status) }}</td>
+    <td>{% if item.status=='Pending' %}<form class="row-actions" method="post" action="{{ url_for('services.review_request',ident=item.id) }}">{{ csrf() }}<button class="btn btn-sm" name="status" value="Reviewed">Mark reviewed</button><button class="btn btn-sm btn-danger" name="status" value="Declined">Decline</button></form>{% else %}—{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody></table></div>
+  {% else %}{{ empty('No customer requests','New service requests will appear here.','calendar') }}{% endif %}
+  {{ pages(pagination) }}
+</section>
+{% endblock %}

@@ -8,8 +8,9 @@ from mysql.connector import Error
 from werkzeug.security import generate_password_hash
 
 from config import settings
-from database.db_connection import close_connection, connection, execute, row
-from routes import auth, customers, dashboard, inventory, mechanics, motorcycles, products, reports, services, transactions
+from database.db_connection import atomic, close_connection, connection, execute, row
+from routes import (auth, customer_portal, customers, dashboard, inventory, mechanics, motorcycles, products,
+                    reports, services, transactions)
 from routes.common import page_url
 
 
@@ -26,7 +27,8 @@ def create_app(overrides=None):
     login.login_message_category = "error"
     login.user_loader(auth.load_user)
 
-    for module in (auth, dashboard, products, inventory, customers, motorcycles, services, mechanics, transactions, reports):
+    for module in (auth, customer_portal, dashboard, products, inventory, customers, motorcycles,
+                   services, mechanics, transactions, reports):
         app.register_blueprint(module.bp)
 
     @app.context_processor
@@ -92,11 +94,35 @@ def create_app(overrides=None):
             auth.validate_password(password)
         except ValueError as error:
             raise click.ClickException(str(error)) from error
-        if row("SELECT id FROM users WHERE username=%s", (username,)):
+        if (row("SELECT id FROM users WHERE username=%s", (username,))
+                or row("SELECT id FROM customer_accounts WHERE username=%s", (username,))):
             raise click.ClickException("That username is already in use.")
         execute("INSERT INTO users (name,username,password_hash,role) VALUES (%s,%s,%s,'admin')",
                 (name, username, generate_password_hash(password)))
         click.echo(f"Created Administrator account {username}.")
+
+    @app.cli.command("create-demo-customer")
+    def create_demo_customer():
+        """Create a demo customer and print its one-time sign-in credentials."""
+        from secrets import token_urlsafe
+
+        username = "demo.customer"
+        if (row("SELECT id FROM users WHERE username=%s", (username,))
+                or row("SELECT id FROM customer_accounts WHERE username=%s", (username,))):
+            raise click.ClickException("The demo customer account already exists.")
+        name, username = auth.account_identity("MotorShop Demo Customer", username)
+        password = token_urlsafe(24)
+        with atomic():
+            customer_id = execute(
+                "INSERT INTO customers (name,phone,address) VALUES (%s,%s,%s)",
+                (name, "0000000000", "Demo account only"),
+            )
+            execute(
+                "INSERT INTO customer_accounts (customer_id,username,password_hash) VALUES (%s,%s,%s)",
+                (customer_id, username, generate_password_hash(password)),
+            )
+        click.echo(f"Demo customer username: {username}")
+        click.echo(f"Temporary password: {password}")
 
     return app
 

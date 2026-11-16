@@ -1,0 +1,12 @@
+{% extends 'form_page.html' %}
+{% from 'ui.html' import input %}
+{% block form_subtitle %}Create sign-in access for {{ customer.name }}. This account can view only this customer’s portal data.{% endblock %}
+{% block cancel_url %}{{ url_for('customers.details',ident=customer.id) }}{% endblock %}
+{% block fields %}
+<div class="notice">The customer will sign in on the MotorShop login page. Share the password securely and ask them to change it after signing in.</div>
+<div class="form-grid">
+  {{ input('username','Username',account.username|default(''),limit=80) }}
+  <label>Password<input type="password" autocomplete="new-password" name="password" minlength="12" maxlength="128" {{ 'required' if not editing }}><small>{{ 'Leave blank to keep the current password.' if editing else 'Use at least 12 characters.' }}</small></label>
+  <label class="checkbox"><input type="checkbox" name="active" value="1" {{ 'checked' if account.active|default(true) }}> Account is active</label>
+</div>
+{% endblock %}

@@ -21,24 +21,38 @@ class Account(UserMixin):
         self.username = record["username"]
         self.role = record["role"]
         self.mechanic_id = record["mechanic_id"]
+        self.customer_id = record.get("customer_id")
         self.version = record["session_version"]
 
     def get_id(self):
-        return f"{self.id}:{self.version}"
+        prefix = "customer:" if self.role == "customer" else ""
+        return f"{prefix}{self.id}:{self.version}"
 
 
 def load_user(identity):
+    customer_account = identity.startswith("customer:")
+    if customer_account:
+        identity = identity[len("customer:"):]
     user_id, separator, version = identity.partition(":")
     if not separator or not user_id.isascii() or not user_id.isdigit() or not version.isascii() or not version.isdigit():
         return None
-    record = row("SELECT * FROM users WHERE id=%s AND session_version=%s AND active=TRUE", (user_id, version))
+    if customer_account:
+        record = row(
+            "SELECT a.id,c.name,a.username,'customer' AS role,NULL AS mechanic_id,a.customer_id,"
+            "a.session_version FROM customer_accounts a JOIN customers c ON c.id=a.customer_id "
+            "WHERE a.id=%s AND a.session_version=%s AND a.active=TRUE",
+            (user_id, version),
+        )
+    else:
+        record = row("SELECT * FROM users WHERE id=%s AND session_version=%s AND active=TRUE", (user_id, version))
     return Account(record) if record else None
 
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for("dashboard.index"))
+        return redirect(url_for("customer_portal.index") if current_user.role == "customer"
+                        else url_for("dashboard.index"))
     if request.method == "POST":
         username = request.form.get("username", "").strip().lower()[:80]
         password = request.form.get("password", "")
@@ -46,16 +60,29 @@ def login():
         if 0 < len(password) <= 128:
             with atomic():
                 record = row("SELECT users.*, NOW() AS checked_at FROM users WHERE username=%s FOR UPDATE", (username,))
+                customer_account = False
+                if not record:
+                    record = row(
+                        "SELECT a.id,c.name,a.username,a.password_hash,'customer' AS role,NULL AS mechanic_id,a.customer_id,"
+                        "a.active,a.session_version,a.failed_attempts,a.locked_until,NOW() AS checked_at "
+                        "FROM customer_accounts a JOIN customers c ON c.id=a.customer_id "
+                        "WHERE a.username=%s FOR UPDATE",
+                        (username,),
+                    )
+                    customer_account = bool(record)
                 if record and record["active"]:
                     now = record["checked_at"]
                     locked = record["locked_until"]
                     if not locked or locked <= now:
                         allowed = check_password_hash(record["password_hash"], password)
                         if allowed:
-                            execute("UPDATE users SET failed_attempts=0,locked_until=NULL WHERE id=%s", (record["id"],))
+                            table = "customer_accounts" if customer_account else "users"
+                            execute(f"UPDATE {table} SET failed_attempts=0,locked_until=NULL WHERE id=%s",
+                                    (record["id"],))
                         else:
                             failures = (0 if locked else record["failed_attempts"]) + 1
-                            execute("UPDATE users SET failed_attempts=%s,locked_until=%s WHERE id=%s",
+                            table = "customer_accounts" if customer_account else "users"
+                            execute(f"UPDATE {table} SET failed_attempts=%s,locked_until=%s WHERE id=%s",
                                     (failures, now + timedelta(minutes=5) if failures >= 5 else None, record["id"]))
                     else:
                         check_password_hash(DUMMY_HASH, password)
@@ -65,7 +92,10 @@ def login():
             session.clear()
             session.permanent = True
             login_user(Account(record))
-            return redirect(url_for("dashboard.index"))
+            return redirect(
+                url_for("customer_portal.index") if record["role"] == "customer"
+                else url_for("dashboard.index")
+            )
         flash("Sign-in failed. Check your credentials or retry in five minutes.", "error")
     return render_template("login.html", title="Sign in")
 
@@ -116,6 +146,8 @@ def user_form(ident=None):
             if ident == current_user.id and (not active or role != "admin"):
                 raise Invalid("Keep your current Administrator account active.")
             mechanic = number("mechanic_id") if role == "mechanic" else None
+            if row("SELECT id FROM customer_accounts WHERE username=%s", (username,)):
+                raise Invalid("That username is already in use.")
             if password or not ident:
                 validate_password(password)
             password_hash = generate_password_hash(password) if password else None
@@ -130,7 +162,8 @@ def user_form(ident=None):
                         (name, username, role, mechanic, active, password_hash, ident),
                     )
                 else:
-                    execute("INSERT INTO users (name,username,role,mechanic_id,active,password_hash) VALUES (%s,%s,%s,%s,%s,%s)",
+                    execute("INSERT INTO users (name,username,role,mechanic_id,active,password_hash) "
+                            "VALUES (%s,%s,%s,%s,%s,%s)",
                             (name, username, role, mechanic, active, password_hash))
             if ident == current_user.id:
                 login_user(load_user(f"{ident}:{account['session_version'] + 1}"))

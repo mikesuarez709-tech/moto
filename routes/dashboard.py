@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from flask import Blueprint, render_template
+from flask import Blueprint, redirect, render_template, url_for
 from flask_login import current_user, login_required
 
 from database.db_connection import row, rows
@@ -13,6 +13,8 @@ bp = Blueprint("dashboard", __name__)
 @login_required
 def index():
     role = current_user.role
+    if role == "customer":
+        return redirect(url_for("customer_portal.index"))
     stats = {}
     chart = []
     stock = []

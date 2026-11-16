@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, header, tag, empty, payment_tag, csrf %}
+{% block content %}
+<div class="page-heading">{{ header('Welcome, ' ~ customer.name,'Your vehicles, service updates, receipts, and requests.') }}</div>
+<section class="panel section-gap">
+  <div class="panel-head"><div><h2>Your motorcycles</h2><p>Only motorcycles registered to your customer account are shown.</p></div></div>
+  {% if motorcycles %}
+  <div class="table-scroll"><table><thead><tr><th>Motorcycle</th><th>Plate</th></tr></thead><tbody>
+  {% for bike in motorcycles %}<tr><td><strong>{{ bike.brand }} {{ bike.model }}</strong></td><td>{{ bike.plate or '—' }}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}{{ empty('No motorcycles registered','Contact the workshop to link your motorcycle to this account.','bike') }}{% endif %}
+</section>
+<section class="panel section-gap">
+  <div class="panel-head"><div><h2>Repair status and service history</h2><p>Recent service jobs and balances</p></div></div>
+  {% if services %}
+  <div class="table-scroll"><table><thead><tr><th>Service</th><th>Motorcycle</th><th>Date</th><th>Status</th><th>Payment</th><th>Receipt</th></tr></thead><tbody>
+  {% for job in services %}<tr><td><strong>{{ job.service_type }}</strong></td><td>{{ job.motorcycle }}</td><td>{{ job.created_at|shortdate }}</td><td>{{ tag(job.status) }}</td><td>{{ payment_tag(job.total,job.paid) }}</td><td><a class="text-link" href="{{ url_for('customer_portal.receipt',kind='service',ident=job.id) }}">View receipt {{ icon('arrow',14) }}</a></td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}{{ empty('No service history','Completed and current jobs will appear here.','tools') }}{% endif %}
+</section>
+<section class="panel section-gap">
+  <div class="panel-head"><div><h2>Sales and receipts</h2><p>Your recent purchases</p></div></div>
+  {% if sales %}
+  <div class="table-scroll"><table><thead><tr><th>Sale</th><th>Date</th><th>Total</th><th>Payment</th><th>Receipt</th></tr></thead><tbody>
+  {% for sale in sales %}<tr><td>#{{ '%05d'|format(sale.id) }}</td><td>{{ sale.created_at|shortdate }}</td><td>{{ sale.total|money }}</td><td>{{ payment_tag(sale.total,sale.paid) }}</td><td><a class="text-link" href="{{ url_for('customer_portal.receipt',kind='sale',ident=sale.id) }}">View receipt {{ icon('arrow',14) }}</a></td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}{{ empty('No sales history','Sales linked to your customer profile will appear here.','receipt') }}{% endif %}
+</section>
+<section class="panel section-gap">
+  <div class="panel-head"><div><h2>Service requests</h2><p>Request service and follow its review status</p></div></div>
+  {% if requests %}
+  <div class="table-scroll"><table><thead><tr><th>Request</th><th>Motorcycle</th><th>Submitted</th><th>Status</th></tr></thead><tbody>
+  {% for item in requests %}<tr><td><strong>{{ item.service_type }}</strong></td><td>{{ item.motorcycle }}</td><td>{{ item.created_at|shortdate }}</td><td>{{ tag(item.status) }}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}{{ empty('No service requests','Submit a request below when you need service.','calendar') }}{% endif %}
+  {% if motorcycles %}
+  <form class="form-panel stack divider" method="post" action="{{ url_for('customer_portal.create_request') }}">
+    {{ csrf(request_key) }}
+    <h3>Request a service</h3>
+    <label>Motorcycle<select name="motorcycle_id" required><option value="">Choose your motorcycle</option>{% for bike in motorcycles %}<option value="{{ bike.id }}">{{ bike.brand }} {{ bike.model }}{% if bike.plate %} · {{ bike.plate }}{% endif %}</option>{% endfor %}</select></label>
+    <label>Service requested<input name="service_type" maxlength="100" required placeholder="For example, oil change"></label>
+    <label>Details<textarea name="description" rows="3" maxlength="2000" placeholder="Describe the issue or preferred schedule"></textarea></label>
+    <button class="btn btn-primary">{{ icon('calendar',17) }} Submit request</button>
+  </form>
+  {% else %}<p class="panel-foot subtle">A registered motorcycle is required before requesting service. Contact the workshop to link one to your account.</p>{% endif %}
+</section>
+{% endblock %}
