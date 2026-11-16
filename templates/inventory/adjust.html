@@ -1,0 +1,14 @@
+{% extends 'form_page.html' %}
+{% from 'ui.html' import csrf, input, numeric %}
+{% block form_subtitle %}{{ item.name }} · {{ item.quantity }} in stock{% endblock %}
+{% block cancel_url %}{{ url_for('inventory.index') }}{% endblock %}
+{% block token %}{{ csrf(key) }}{% endblock %}
+{% block submit_label %}Save adjustment{% endblock %}
+{% block fields %}
+<div class="form-grid">
+<label class="wide">Action<select name="action" data-adjustment><option value="in" {{ 'selected' if request.form.action=='in' }}>Stock in</option><option value="out" {{ 'selected' if request.form.action=='out' }}>Stock out</option><option value="minimum" {{ 'selected' if request.form.action=='minimum' }}>Set minimum stock</option></select></label>
+<div data-stock-fields>{{ numeric('quantity','Quantity',request.form.quantity|default(''),min='1',max='1000000',required=false) }}</div>
+<div data-stock-fields>{{ input('reason','Reason',request.form.reason|default(''),limit=180,required=false) }}</div>
+<div data-minimum-fields>{{ numeric('minimum','Minimum stock',request.form.minimum|default(item.minimum),max='4000000000',required=false) }}</div>
+</div>
+{% endblock %}

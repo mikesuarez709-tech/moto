@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, header, tag, pagination as pages, empty %}
+{% block content %}
+<div class="page-heading">{{ header('User accounts','Manage staff access and permissions.') }}<a class="btn btn-primary" href="{{ url_for('auth.user_form') }}">{{ icon('plus',18) }} Add account</a></div>
+<section class="panel">{% if accounts %}<div class="table-scroll"><table><thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Mechanic</th><th>Status</th><th>Action</th></tr></thead><tbody>{% for u in accounts %}<tr><td><strong>{{ u.name }}</strong></td><td>{{ u.username }}</td><td>{{ 'Administrator' if u.role=='admin' else u.role|capitalize }}</td><td>{{ u.mechanic or '—' }}</td><td>{{ tag('Active' if u.active else 'Inactive') }}</td><td><a class="btn btn-sm" href="{{ url_for('auth.user_form',ident=u.id) }}">Edit</a></td></tr>{% endfor %}</tbody></table></div>{% else %}{{ empty('No accounts','Add a staff account to continue.','users') }}{% endif %}{{ pages(pagination) }}</section>
+{% endblock %}

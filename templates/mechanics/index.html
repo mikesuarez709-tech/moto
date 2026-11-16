@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, header, tag, empty, search_field, pagination as pages %}
+{% block content %}
+<div class="page-heading">{{ header('Mechanics','Manage workshop staff, availability, and assignments.') }}<a class="btn btn-primary" href="{{ url_for('mechanics.form') }}">{{ icon('plus',18) }} Add mechanic</a></div>
+<section class="panel"><form class="toolbar" method="get">{{ search_field(query,'Search name or phone…') }}<select name="availability" aria-label="Availability"><option value="">All mechanics</option><option value="yes" {{ 'selected' if availability=='yes' }}>Available</option><option value="no" {{ 'selected' if availability=='no' }}>Unavailable</option></select><button class="btn">Filter</button></form>
+{% if entries %}<div class="table-scroll"><table><thead><tr><th>Name</th><th>Phone</th><th>Availability</th><th>Open jobs</th><th>Completed</th><th>Actions</th></tr></thead><tbody>{% for m in entries %}<tr><td><strong>{{ m.name }}</strong></td><td>{{ m.phone }}</td><td>{{ tag('Available' if m.available else 'Unavailable') }}</td><td>{{ m.open_jobs }}</td><td>{{ m.completed }}</td><td><div class="row-actions"><a class="btn btn-sm" href="{{ url_for('services.index',mechanic=m.id) }}">View jobs</a><a class="btn btn-sm" href="{{ url_for('mechanics.form',ident=m.id) }}">Edit</a></div></td></tr>{% endfor %}</tbody></table></div>{% else %}{{ empty('No mechanics found','Add a mechanic or change your filters.','mechanic') }}{% endif %}{{ pages(pagination) }}</section>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, header, csrf, numeric, payment_fields, payment_tag, tag, empty %}
+{% block content %}
+{% set service=kind=='service' %}
+{% set cancelled=service and item.status=='Cancelled' %}
+<div class="page-heading no-print">{{ header(title) }}<div class="heading-actions"><a class="btn" href="{{ back }}">{{ icon('back',18) }} Back</a><button class="btn btn-primary" type="button" data-print>{{ icon('print',18) }} Print receipt</button></div></div>
+<section class="panel receipt print-target">
+<div class="receipt-top"><div><span class="eyebrow">{{ shop_name }}</span><h1>{{ 'Service receipt' if service else 'Sales receipt' }}</h1><p>{{ 'Job' if service else 'Sale' }} #{{ '%05d'|format(item.id) }} · {{ item.created_at|shortdate }}</p></div>{% if cancelled %}{{ tag('Cancelled') }}{% else %}{{ payment_tag(totals.total,totals.paid) }}{% endif %}</div>
+<dl class="detail-list receipt-meta"><dt>Customer</dt><dd>{{ item.customer }}</dd>{% if service %}<dt>Motorcycle</dt><dd>{{ item.motorcycle }}</dd><dt>Service</dt><dd>{{ item.service_type }}</dd>{% else %}<dt>Recorded by</dt><dd>{{ item.operator }}</dd>{% endif %}</dl>
+{% if not cancelled %}
+<div class="table-scroll"><table><thead><tr><th>Item</th><th>Quantity</th><th>Unit price</th><th>Subtotal</th></tr></thead><tbody>
+{% if service %}<tr><td>Labor</td><td>1</td><td>{{ item.labor|money }}</td><td>{{ item.labor|money }}</td></tr>{% endif %}
+{% for line in lines %}<tr><td>{{ line.product_name }}</td><td>{{ line.quantity }}</td><td>{{ line.unit_price|money }}</td><td>{{ (line.quantity*line.unit_price)|money }}</td></tr>{% endfor %}</tbody></table></div>
+<dl class="detail-list receipt-totals"><dt>Total</dt><dd><strong>{{ totals.total|money }}</strong></dd><dt>Paid</dt><dd>{{ totals.paid|money }}</dd><dt>Balance</dt><dd><strong>{{ (totals.total-totals.paid)|money }}</strong></dd></dl>
+{% if payments %}<div class="panel-head"><h2>Payments</h2></div><div class="table-scroll"><table><thead><tr><th>Date</th><th>Method</th><th>Reference</th><th>Amount</th></tr></thead><tbody>{% for payment in payments %}<tr><td>{{ payment.created_at|shortdate }}</td><td>{{ payment.method }}</td><td>{{ payment.reference or '—' }}</td><td>{{ payment.amount|money }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+{% else %}<p class="panel-foot">This service was cancelled. No balance is due.</p>{% endif %}
+</section>
+{% if not cancelled and totals.total>totals.paid %}<section class="panel form-panel section-gap no-print receipt"><h2>Record a payment</h2><form class="stack" method="post" action="{{ url_for('services.collect' if service else 'transactions.payment',ident=item.id) }}">{{ csrf(key) }}{{ numeric('amount','Payment amount (₱)',totals.total-totals.paid,step='0.01',min='0.01',max=totals.total-totals.paid) }}{{ payment_fields(methods) }}<button class="btn btn-primary">{{ icon('check',17) }} Record payment</button></form></section>{% endif %}
+{% endblock %}

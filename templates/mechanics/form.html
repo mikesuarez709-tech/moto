@@ -1,0 +1,5 @@
+{% extends 'form_page.html' %}
+{% from 'ui.html' import input %}
+{% block form_subtitle %}Set the mechanic’s contact details and availability for new jobs.{% endblock %}
+{% block cancel_url %}{{ url_for('mechanics.index') }}{% endblock %}
+{% block fields %}<div class="form-grid">{{ input('name','Full name',entry.name|default('')) }}{{ input('phone','Phone number',entry.phone|default(''),type='tel',limit=40) }}<label class="checkbox"><input type="checkbox" name="available" value="1" {{ 'checked' if entry.available }}> Available for new assignments</label></div>{% endblock %}

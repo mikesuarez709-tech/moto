@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, brand, csrf with context %}
+{% block flashes %}{% endblock %}
+{% block content %}
+<div class="login-layout">
+  <section class="login-art">
+    <a class="brand" href="{{ url_for('auth.login') }}">{{ brand() }}</a>
+    <div class="login-art-copy"><span class="accent-line"></span><p class="eyebrow">MOTORCYCLE PARTS &amp; SERVICE</p><h2>RUN YOUR<br>WORKSHOP.</h2><p>Keep jobs, parts, and sales in one place.</p></div>
+  </section>
+  <section class="login-content">
+    <div class="login-card">
+      <div class="login-mobile-brand brand">{{ brand() }}</div>
+      <div class="login-icon">{{ icon('lock',24) }}</div>
+      <h1>Sign in</h1><p class="subtle login-subtitle">Use your workshop account to continue.</p>
+      {% include 'flashes.html' %}
+      <form method="post" class="stack login-form">{{ csrf() }}
+        <label>Username<input name="username" autocomplete="username" required maxlength="80" value="{{ request.form.get('username','') }}" placeholder="Enter your username" autofocus></label>
+        <label>Password<span class="password-field"><input id="password" name="password" type="password" autocomplete="current-password" maxlength="128" required placeholder="Enter your password"><button type="button" data-password-toggle aria-controls="password" aria-label="Show password">{{ icon('eye',19) }}</button></span></label>
+        <button class="btn btn-primary login-submit">Sign in {{ icon('arrow',19) }}</button>
+      </form>
+    </div>
+    <footer class="login-footer">{{ shop_name }} <span>·</span> Staff access</footer>
+  </section>
+</div>
+{% endblock %}

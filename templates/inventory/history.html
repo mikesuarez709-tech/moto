@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, header, search_field, pagination as pages %}
+{% block content %}
+<div class="page-heading">{{ header('Stock movements','Audit quantities added, sold, used, or returned.') }}<a class="btn" href="{{ url_for('inventory.index') }}">{{ icon('back',17) }} Inventory</a></div>
+<section class="panel"><form class="toolbar" method="get">{{ search_field(query,'Search product, SKU, or reason…') }}<button class="btn">Search</button></form>{% include 'inventory/movements.html' %}{{ pages(pagination) }}</section>
+{% endblock %}

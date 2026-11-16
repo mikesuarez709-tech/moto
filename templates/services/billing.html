@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, header, payment_tag, empty, search_field, pagination as pages %}
+{% block content %}
+<div class="page-heading">{{ header('Service payments','Look up a job to record a payment or print its receipt.') }}<a class="btn" href="{{ url_for('transactions.index') }}">{{ icon('back',17) }} Transactions</a></div>
+<section class="panel"><form class="toolbar" method="get">{{ search_field(query,'Search job, customer, or motorcycle…') }}<button class="btn">Search</button></form>
+{% if entries %}<div class="table-scroll"><table><thead><tr><th>Job</th><th>Customer</th><th>Motorcycle</th><th>Total</th><th>Balance</th><th>Payment status</th><th>Action</th></tr></thead><tbody>
+{% for job in entries %}<tr><td><strong>{{ job.service_type }}</strong><small>#{{ '%05d'|format(job.id) }} · {{ job.created_at|shortdate }}</small></td><td>{{ job.customer }}</td><td>{{ job.motorcycle }}</td><td class="num">{{ job.total|money }}</td><td class="num">{{ (job.total-job.paid)|money }}</td><td>{{ payment_tag(job.total,job.paid) }}</td><td><a class="btn btn-sm" href="{{ url_for('services.receipt',ident=job.id) }}">{{ 'View / pay' if job.paid<job.total else 'View receipt' }}</a></td></tr>{% endfor %}
+</tbody></table></div>{% else %}{{ empty('No matching services','Try a different search.','tools') }}{% endif %}{{ pages(pagination) }}</section>
+{% endblock %}

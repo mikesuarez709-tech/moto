@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, header, empty, search_field, pagination as pages %}
+{% block content %}
+<div class="page-heading">{{ header('Motorcycles','Maintain vehicle records linked to their owners.') }}<a class="btn btn-primary" href="{{ url_for('motorcycles.form') }}">{{ icon('plus',18) }} Register motorcycle</a></div>
+<section class="panel"><form class="toolbar" method="get">{{ search_field(query,'Search model, plate, engine, or owner…') }}{% if owner %}<input type="hidden" name="owner" value="{{ owner }}"><a class="btn" href="{{ url_for('motorcycles.index') }}">Clear owner filter</a>{% endif %}<button class="btn">Search</button></form>
+{% if entries %}<div class="table-scroll"><table><thead><tr><th>Motorcycle</th><th>Owner</th><th>Plate</th><th>Engine number</th><th>Registered</th><th>Action</th></tr></thead><tbody>{% for m in entries %}<tr><td><div class="product-cell"><span class="table-icon">{{ icon('bike',19) }}</span><strong>{{ m.brand }} {{ m.model }}</strong></div></td><td><a class="text-link" href="{{ url_for('customers.details',ident=m.customer_id) }}">{{ m.owner }}</a></td><td>{{ m.plate or '—' }}</td><td class="mono">{{ m.engine_number }}</td><td>{{ m.created_at|shortdate }}</td><td><a class="btn btn-sm" href="{{ url_for('motorcycles.form',ident=m.id) }}">Edit</a></td></tr>{% endfor %}</tbody></table></div>{% else %}{{ empty('No motorcycles found','Register a motorcycle or try a different search.','bike') }}{% endif %}{{ pages(pagination) }}</section>
+{% endblock %}

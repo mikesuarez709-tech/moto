@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, header, csrf, numeric, customer_options, payment_fields, empty %}
+{% macro sale_row(product='',quantity=1) -%}
+<div class="sale-row" data-sale-row><label>Product<select name="product_id" data-product><option value="">Choose a product</option>{% for p in catalog %}<option value="{{ p.id }}" data-price="{{ p.price }}" data-available="{{ p.quantity }}" {{ 'selected' if p.id|string==product|string }}>{{ p.name }} · {{ p.sku }} ({{ p.quantity }} left)</option>{% endfor %}</select></label><label>Quantity<input name="quantity" type="number" value="{{ quantity }}" min="1" max="100000" data-qty></label><span class="sale-subtotal" data-subtotal>₱0.00</span><button class="icon-btn" type="button" data-remove-line aria-label="Remove line">{{ icon('close',17) }}</button></div>
+{%- endmacro %}
+{% block content %}
+<div class="page-heading">{{ header('New sale','Add products, choose a customer, and record payment.') }}<a class="btn" href="{{ url_for('transactions.index') }}">{{ icon('back',17) }} Transactions</a></div>
+{% if catalog %}
+<form method="post" data-checkout class="checkout-grid">
+{{ csrf(key) }}
+<section class="panel"><div class="panel-head"><div><h2>Sale items</h2><p>Prices and quantities are verified when you submit.</p></div><button class="btn btn-sm" type="button" data-add-line>{{ icon('plus',17) }} Add item</button></div>
+<div class="sale-rows" data-sale-rows>{% for p,qty in submitted %}{{ sale_row(p,qty) }}{% endfor %}</div>
+<template id="sale-line-template">{{ sale_row() }}</template>
+</section>
+<section class="panel"><div class="panel-head"><h2>Order summary</h2></div><div class="form-panel stack">
+<label>Customer<select name="customer_id">{{ customer_options(customers,request.form.get('customer_id'),true) }}</select></label>
+<label>Payment status<select name="payment_status" data-pay-status>{% for status in ['Paid','Unpaid','Partial'] %}<option {{ 'selected' if request.form.payment_status==status }}>{{ status }}</option>{% endfor %}</select></label>
+<div class="stack" data-pay-fields>{{ payment_fields(methods,request.form.get('method','Cash'),request.form.get('reference','')) }}</div>
+<div data-partial-fields>{{ numeric('amount','Partial payment (₱)',request.form.get('amount',''),step='0.01',min='0.01',required=false) }}</div>
+<div class="sale-total"><span>Sale total</span><strong data-sale-total aria-live="polite">₱0.00</strong></div>
+<button class="btn btn-primary btn-full">{{ icon('check',18) }} Record sale</button>
+</div></section></form>
+{% else %}<section class="panel">{{ empty('No products available for sale','Products with available stock appear at checkout.','box') }}{% if current_user.role=='admin' %}<div class="panel-foot"><a class="btn" href="{{ url_for('inventory.index') }}">Open inventory</a></div>{% endif %}</section>{% endif %}
+{% endblock %}

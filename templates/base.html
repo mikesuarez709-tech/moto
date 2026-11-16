@@ -1,0 +1,48 @@
+{% from 'ui.html' import icon, brand, csrf with context %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="same-origin">
+<title>{{ title }} | {{ shop_name }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script defer src="{{ url_for('static', filename='js/script.js') }}"></script>
+</head>
+<body class="{{ 'application' if current_user.is_authenticated else 'guest' }}">
+<a class="skip" href="#main">Skip to content</a>
+{% if current_user.is_authenticated %}
+{% set role = current_user.role %}
+{% set active = request.blueprint %}
+<button type="button" class="drawer-backdrop" data-close-nav aria-label="Close navigation" hidden></button>
+<aside class="sidebar" id="navigation">
+  <a class="brand" href="{{ url_for('dashboard.index') }}">{{ brand() }}</a>
+  <nav class="navigation" aria-label="Main navigation">
+    {% set links = [('Dashboard','dashboard','dashboard.index',['admin','cashier','mechanic']),('Products','box','products.index',['admin']),('Inventory','inventory','inventory.index',['admin']),('Customers','users','customers.index',['admin','cashier']),('Motorcycles','bike','motorcycles.index',['admin']),('Services','tools','services.index',['admin','mechanic']),('Mechanics','mechanic','mechanics.index',['admin']),('Transactions','receipt','transactions.index',['admin','cashier']),('Reports','chart','reports.index',['admin']),('User accounts','lock','auth.users',['admin'])] %}
+    <div class="nav-label">WORKSPACE</div>
+    {% for label, glyph, endpoint, allowed in links if role in allowed %}
+    <a class="nav-link {{ 'current' if active==endpoint.split('.')[0] }}" href="{{ url_for(endpoint) }}" {% if active==endpoint.split('.')[0] %}aria-current="page"{% endif %}>{{ icon(glyph,19) }} <span>{{ label }}</span></a>
+    {% endfor %}
+  </nav>
+  <div class="sidebar-footer"><div class="sidebar-account"><span class="avatar">{{ current_user.name[:2]|upper }}</span><span><strong>{{ current_user.name }}</strong><small>{{ 'Administrator' if role=='admin' else role|capitalize }}</small></span></div>
+    <form method="post" action="{{ url_for('auth.logout') }}">{{ csrf() }}<button class="nav-link sign-out" type="submit">{{ icon('logout',19) }} <span>Sign out</span></button></form>
+  </div>
+</aside>
+<div class="workspace">
+  <header class="topbar">
+    <div class="top-left"><button class="icon-btn menu-toggle" type="button" data-toggle-nav aria-controls="navigation" aria-expanded="false" aria-label="Open navigation">{{ icon('menu') }}</button><span>Workspace</span>{{ icon('right',14) }}<strong>{{ title }}</strong></div>
+    <div class="top-actions"><span class="current-date">{{ icon('calendar',17) }} {{ today.strftime('%a, %b %d, %Y') }}</span>
+      {% if role=='admin' %}<details class="dropdown"><summary class="icon-btn notification" aria-label="Stock notifications">{{ icon('bell') }}{% if stats is defined and stats.low %}<i></i>{% endif %}</summary><div class="dropdown-menu"><b>Stock notifications</b><a href="{{ url_for('inventory.index',stock='low') }}">{% if stats is defined and stats.low is defined %}{{ stats.low }} low-stock {{ 'item' if stats.low==1 else 'items' }}{% else %}Check low-stock items{% endif %}{{ icon('arrow',15) }}</a></div></details>{% endif %}
+      <details class="dropdown"><summary class="profile-toggle" aria-label="Account menu"><span class="avatar">{{ current_user.name[:2]|upper }}</span>{{ icon('down',14) }}</summary>
+      <div class="dropdown-menu"><b>{{ current_user.name }}</b><span>{{ 'Administrator' if role=='admin' else role|capitalize }}</span>{% if role=='admin' %}<a href="{{ url_for('auth.users') }}">Manage accounts</a>{% endif %}<form method="post" action="{{ url_for('auth.logout') }}">{{ csrf() }}<button type="submit">{{ icon('logout',16) }} Sign out</button></form></div></details>
+    </div>
+  </header>
+{% endif %}
+<main id="main" class="{{ 'content' if current_user.is_authenticated else 'guest-main' }}">
+  {% block flashes %}{% include 'flashes.html' %}{% endblock %}
+  {% block content %}{% endblock %}
+</main>
+{% if current_user.is_authenticated %}</div>{% endif %}
+<dialog id="confirm-dialog" class="confirm-dialog"><form method="dialog"><h2>Confirm action</h2><p data-confirm-copy></p><div class="form-actions"><button value="cancel" class="btn" autofocus>Cancel</button><button value="confirm" class="btn btn-danger">Confirm</button></div></form></dialog>
+</body>
+</html>

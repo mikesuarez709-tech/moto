@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, csrf, header, input, empty, pagination as pages %}
+{% block content %}
+<div class="page-heading">{{ header('Categories','Organize products for searching and reporting.') }}<a class="btn" href="{{ url_for('products.index') }}">{{ icon('back',17) }} Products</a></div>
+<div class="split-layout"><section class="panel form-panel"><h2>Add category</h2><form method="post" class="stack">{{ csrf() }}<input type="hidden" name="action" value="add">{{ input('name','Category name',limit=90) }}<button class="btn btn-primary">{{ icon('plus',17) }} Add category</button></form></section>
+<section class="panel"><div class="panel-head"><h2>Categories</h2></div>
+{% if entries %}<div class="editable-list">{% for c in entries %}<div><form method="post" class="row-actions">{{ csrf() }}<input type="hidden" name="category_id" value="{{ c.id }}"><input type="hidden" name="action" value="edit"><input aria-label="Category name" name="name" required maxlength="90" value="{{ c.name }}"><button class="btn btn-sm">Save</button></form><small>{{ c.products }} products</small><form method="post" data-confirm="Delete this category?">{{ csrf() }}<input type="hidden" name="category_id" value="{{ c.id }}"><input type="hidden" name="action" value="delete"><button class="btn btn-sm danger-text">Delete</button></form></div>{% endfor %}</div>{% else %}{{ empty('No categories','Add a category to get started.','tag') }}{% endif %}{{ pages(pagination) }}</section></div>
+{% endblock %}

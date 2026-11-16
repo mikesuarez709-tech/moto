@@ -1,0 +1,15 @@
+{% extends 'form_page.html' %}
+{% from 'ui.html' import input, numeric %}
+{% block cancel_url %}{{ url_for('products.index') }}{% endblock %}
+{% block fields %}
+{% if not categories %}<div class="notice">Create a <a href="{{ url_for('products.categories') }}">category</a> before saving a product.</div>{% endif %}
+<div class="form-grid">
+{{ input('name','Product name',entry.name|default('')) }}{{ input('sku','SKU',entry.sku|default(''),limit=40) }}
+<label>Category<select name="category_id" required><option value="">Choose a category</option>{% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if c.id|string==entry.category_id|string }}>{{ c.name }}</option>{% endfor %}</select></label>
+{{ input('brand','Brand',entry.brand|default(''),required=false,limit=80) }}
+{{ numeric('price','Selling price (₱)',entry.price|default(''),step='0.01',max='9999999999.99') }}
+{{ numeric('minimum','Minimum stock',entry.minimum|default(5),max='4000000000') }}
+<label class="wide">Description<textarea name="description" rows="4" maxlength="1000">{{ entry.description or '' }}</textarea></label>
+<div class="wide">{{ input('image_url','Image URL',entry.image_url|default(''),type='url',limit=500,required=false,hint='Optional HTTPS link to a product photo.') }}</div>
+</div>
+{% endblock %}

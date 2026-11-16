@@ -1,0 +1,17 @@
+{% extends 'form_page.html' %}
+{% from 'ui.html' import csrf, input, numeric, customer_options %}
+{% block form_subtitle %}Open a repair or maintenance job and assign an available mechanic.{% endblock %}
+{% block cancel_url %}{{ url_for('services.index') }}{% endblock %}
+{% block token %}{{ csrf(key) }}{% endblock %}
+{% block submit_label %}Create service job{% endblock %}
+{% block fields %}
+{% if not motorcycles or not mechanics %}<div class="notice">A <a href="{{ url_for('motorcycles.form') }}">registered motorcycle</a> and an <a href="{{ url_for('mechanics.index') }}">available mechanic</a> are needed to create a job.</div>{% endif %}
+<div class="form-grid">
+<label>Customer<select name="customer_id" data-job-owner required>{{ customer_options(customers,request.form.get('customer_id','')) }}</select></label>
+<label>Motorcycle<select name="motorcycle_id" data-job-bike required><option value="">Choose a motorcycle</option>{% for bike in motorcycles %}<option value="{{ bike.id }}" data-owner="{{ bike.customer_id }}" {{ 'selected' if bike.id|string==request.form.get('motorcycle_id','') }}>{{ bike.brand }} {{ bike.model }}{% if bike.plate %} · {{ bike.plate }}{% endif %}</option>{% endfor %}</select></label>
+<label>Mechanic<select name="mechanic_id" required><option value="">Choose a mechanic</option>{% for mechanic in mechanics %}<option value="{{ mechanic.id }}" {{ 'selected' if mechanic.id|string==request.form.get('mechanic_id','') }}>{{ mechanic.name }}</option>{% endfor %}</select></label>
+{{ input('service_type','Service type',request.form.get('service_type',''),limit=100) }}
+{{ numeric('labor','Labor cost (₱)',request.form.get('labor','0'),step='0.01',max='9999999999.99') }}
+<label class="wide">Repair description<textarea name="description" required maxlength="2000" rows="5">{{ request.form.get('description','') }}</textarea></label>
+</div>
+{% endblock %}

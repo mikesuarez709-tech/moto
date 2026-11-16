@@ -1,0 +1,13 @@
+{% extends 'form_page.html' %}
+{% from 'ui.html' import input %}
+{% block form_subtitle %}Assign the permissions needed for this staff account.{% endblock %}
+{% block cancel_url %}{{ url_for('auth.users') }}{% endblock %}
+{% block fields %}
+<div class="form-grid">
+{{ input('name','Full name',account.name|default('')) }}{{ input('username','Username',account.username|default(''),limit=80) }}
+<label>Role<select name="role" data-role-select>{% for role in roles %}<option value="{{ role }}" {{ 'selected' if role==account.role or (not account.role and role=='cashier') }}>{{ 'Administrator' if role=='admin' else role|capitalize }}</option>{% endfor %}</select></label>
+<label data-mechanic-link>Linked mechanic<select name="mechanic_id"><option value="">Select mechanic</option>{% for m in mechanics %}<option value="{{ m.id }}" {{ 'selected' if m.id|string==account.mechanic_id|string }}>{{ m.name }}</option>{% endfor %}</select></label>
+<label>Password<input type="password" autocomplete="new-password" name="password" minlength="12" maxlength="128" {{ 'required' if not editing }}><small>{{ 'Leave blank to keep the current password.' if editing else 'Use at least 12 characters.' }}</small></label>
+<label class="checkbox"><input type="checkbox" name="active" value="1" {{ 'checked' if account.active|default(true) }}> Account is active</label>
+</div>
+{% endblock %}

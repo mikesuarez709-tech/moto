@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, header, empty, tag, payment_tag %}
+{% block content %}
+{% set role=current_user.role %}
+<div class="page-heading heading-dashboard">{{ header('Dashboard') }}<div class="heading-actions">{% if role=='admin' %}<a class="btn" href="{{ url_for('services.add') }}">{{ icon('tools',17) }} New service</a>{% endif %}{% if role!='mechanic' %}<a class="btn btn-primary" href="{{ url_for('transactions.checkout') }}">{{ icon('plus',19) }} New sale</a>{% endif %}</div></div>
+<section class="dashboard-hero">
+  <div class="hero-copy"><div class="eyebrow"><span></span> {{ 'SERVICE BAY' if role=='mechanic' else 'WORKSHOP OVERVIEW' }}</div><h2>Welcome back, {{ current_user.name.split()[0] }}.</h2><p>{{ 'Review your assigned jobs and update their progress.' if role=='mechanic' else 'Track sales, stock, and service activity from one place.' if role=='admin' else 'Record sales and manage customer transactions.' }}</p></div>
+</section>
+{% if role!='mechanic' %}
+<div class="stat-grid">
+  {% for key,label,detail,glyph,tone in [('sales','Total sales','Recorded product sales','receipt','orange'),('income','Paid income','Payments received','wallet','green'),('products','Active products','Items in the catalog','box','blue'),('customers','Customers','Registered customer accounts','users','violet'),('motorcycles','Motorcycles','Registered motorcycles','bike','slate')] %}
+  <section class="stat-card"><span class="stat-icon {{ tone }}">{{ icon(glyph,21) }}</span><span class="stat-label">{{ label }}</span><strong>{{ stats[key]|money if key in ['sales','income'] else stats[key] }}</strong><small>{{ detail }}</small></section>
+  {% endfor %}
+</div>
+{% endif %}
+<div class="dash-grid">
+{% if role!='mechanic' %}
+  <section class="panel trend-panel"><div class="panel-head"><div><h2>Sales &amp; income</h2><p>Last 7 days</p></div><select aria-label="Chart metric" data-chart-metric><option value="value">Paid income</option><option value="sales">Product sales</option></select></div>
+  <div class="chart-area" data-chart='{{ chart|tojson }}'><canvas role="img" aria-label="Paid income over the last seven days">{% for day in chart %}{{ day.label }}: {{ day.value|money }} received, {{ day.sales|money }} in product sales. {% endfor %}</canvas><div class="chart-tooltip" hidden></div></div></section>
+{% endif %}
+{% if role!='cashier' %}
+  <section class="panel jobs-panel"><div class="panel-head"><div><h2>Service queue</h2><p>{{ 'Your assigned jobs' if role=='mechanic' else 'Current job statuses' }}</p></div><a class="icon-btn" href="{{ url_for('services.index') }}" aria-label="View service jobs">{{ icon('external',18) }}</a></div><div class="status-list">
+  {% for label,glyph in [('Pending','clock'),('In Progress','tools'),('Completed','check'),('Cancelled','close')] %}<a href="{{ url_for('services.index',status=label) }}"><span class="status-icon {{ label|lower|replace(' ','-') }}">{{ icon(glyph,17) }}</span><span>{{ label }}</span><strong>{{ status[label] }}</strong></a>{% endfor %}
+  </div></section>
+{% endif %}
+{% if role=='cashier' %}
+  <section class="panel"><div class="panel-head"><div><h2>Quick actions</h2><p>Sales and customer records</p></div></div><div class="status-list"><a href="{{ url_for('transactions.checkout') }}"><span class="status-icon in-progress">{{ icon('plus',17) }}</span><span>New sale</span>{{ icon('right',16) }}</a><a href="{{ url_for('customers.form') }}"><span class="status-icon completed">{{ icon('users',17) }}</span><span>Register customer</span>{{ icon('right',16) }}</a><a href="{{ url_for('services.billing') }}"><span class="status-icon pending">{{ icon('wallet',17) }}</span><span>Service payments</span>{{ icon('right',16) }}</a><a href="{{ url_for('transactions.index') }}"><span class="status-icon pending">{{ icon('receipt',17) }}</span><span>View transactions</span>{{ icon('right',16) }}</a></div></section>
+{% endif %}
+{% if role!='mechanic' %}
+  <section class="panel recent-panel"><div class="panel-head"><div><h2>Recent transactions</h2><p>Latest product sales</p></div><a class="text-link" href="{{ url_for('transactions.index') }}">View all {{ icon('arrow',15) }}</a></div>
+  {% if recent_sales %}<div class="table-scroll"><table><thead><tr><th>Sale</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead><tbody>{% for sale in recent_sales %}<tr><td><a class="text-link" href="{{ url_for('transactions.receipt',ident=sale.id) }}">#{{ '%05d'|format(sale.id) }}</a><small>{{ sale.created_at|shortdate }}</small></td><td>{{ sale.customer }}</td><td class="num">{{ sale.total|money }}</td><td>{{ payment_tag(sale.total,sale.paid) }}</td></tr>{% endfor %}</tbody></table></div>
+  {% else %}{{ empty('No transactions yet','Recorded sales will appear here.','receipt') }}{% endif %}</section>
+{% endif %}
+{% if role=='admin' %}
+  <section class="panel stock-panel"><div class="panel-head"><div><h2>Low-stock alerts</h2><p>{{ stats.low }} {{ 'product needs' if stats.low==1 else 'products need' }} attention</p></div><a class="icon-btn" href="{{ url_for('inventory.index',stock='low') }}" aria-label="View low stock">{{ icon('alert',18) }}</a></div>
+  {% if stock %}<div class="stock-list">{% for item in stock %}<div><span class="stock-mark">{{ icon('box',17) }}</span><span><strong>{{ item.name }}</strong><small>{{ item.sku }}</small></span><span class="tag low-stock">{{ item.quantity }} left</span></div>{% endfor %}</div>{% else %}{{ empty('Stock levels are clear','Products at or below their minimum appear here.','inventory') }}{% endif %}</section>
+{% endif %}
+{% if role!='cashier' %}
+  <section class="panel activity-panel"><div class="panel-head"><div><h2>Recent service activity</h2><p>{{ 'Your latest job updates' if role=='mechanic' else 'Latest changes in the workshop' }}</p></div><a class="text-link" href="{{ url_for('services.index') }}">View services {{ icon('arrow',15) }}</a></div>
+  {% if jobs %}<div class="table-scroll"><table><thead><tr><th>Job</th><th>Motorcycle</th><th>Updated</th><th>Status</th></tr></thead><tbody>{% for job in jobs %}<tr><td><a class="text-link" href="{{ url_for('services.details',ident=job.id) }}">{{ job.service_type }}</a></td><td>{{ job.motorcycle }}</td><td>{{ job.updated_at|shortdate }}</td><td>{{ tag(job.status) }}</td></tr>{% endfor %}</tbody></table></div>{% else %}{{ empty('No service activity','Job updates will appear here.','tools') }}{% endif %}</section>
+{% endif %}
+</div>
+{% endblock %}

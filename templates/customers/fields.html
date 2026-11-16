@@ -1,0 +1,6 @@
+{% extends 'form_page.html' %}
+{% from 'ui.html' import input %}
+{% block cancel_url %}{{ url_for('customers.index') }}{% endblock %}
+{% block fields %}
+<div class="form-grid">{{ input('name','Full name',entry.name|default('')) }}{{ input('phone','Phone number',entry.phone|default(''),type='tel',limit=40) }}<label class="wide">Address<textarea name="address" rows="3" maxlength="255" required>{{ entry.address or '' }}</textarea></label></div>
+{% endblock %}

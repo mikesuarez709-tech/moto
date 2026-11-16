@@ -1,0 +1,2 @@
+{% from 'ui.html' import icon %}
+{% for category, message in get_flashed_messages(with_categories=true) %}<div class="flash {{ category }}" role="{{ 'alert' if category=='error' else 'status' }}">{{ icon('alert' if category=='error' else 'check',18) }}<span>{{ message }}</span><button type="button" data-dismiss aria-label="Dismiss">{{ icon('close',16) }}</button></div>{% endfor %}

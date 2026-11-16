@@ -1,0 +1,8 @@
+{% extends 'form_page.html' %}
+{% from 'ui.html' import input, customer_options %}
+{% block form_subtitle %}Enter vehicle details and choose its registered owner.{% endblock %}
+{% block cancel_url %}{{ url_for('motorcycles.index') }}{% endblock %}
+{% block fields %}
+{% if not customers %}<div class="notice"><a href="{{ url_for('customers.form') }}">Register a customer</a> before adding their motorcycle.</div>{% endif %}
+<div class="form-grid"><label class="wide">Owner<select name="customer_id" required>{{ customer_options(customers,entry.customer_id) }}</select></label>{{ input('brand','Brand',entry.brand|default(''),limit=80) }}{{ input('model','Model',entry.model|default(''),limit=80) }}{{ input('plate','Plate number',entry.plate|default(''),limit=30,required=false,hint='Leave blank if a plate has not been issued.') }}{{ input('engine_number','Engine number',entry.engine_number|default(''),limit=80) }}</div>
+{% endblock %}
