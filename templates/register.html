@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, brand, csrf with context %}
+{% block flashes %}{% endblock %}
+{% block content %}
+<div class="login-layout">
+  <section class="login-art">
+    <a class="brand" href="{{ url_for('auth.login') }}">{{ brand() }}</a>
+    <div class="login-art-copy"><span class="accent-line"></span><p class="eyebrow">MOTORCYCLE PARTS &amp; SERVICE</p><h2>YOUR SHOP.<br>YOUR RIDE.</h2><p>Create an account to see products and follow your purchase requests.</p></div>
+  </section>
+  <section class="login-content">
+    <div class="login-card">
+      <div class="login-mobile-brand brand">{{ brand() }}</div>
+      <div class="login-icon">{{ icon('users',24) }}</div>
+      <h1>Create a customer account</h1><p class="subtle login-subtitle">Use your contact details so the shop can confirm orders.</p>
+      {% include 'flashes.html' %}
+      <form method="post" class="stack login-form">{{ csrf() }}
+        <label>Full name<input name="name" autocomplete="name" required maxlength="120" value="{{ request.form.get('name','') }}"></label>
+        <label>Phone<input name="phone" autocomplete="tel" required maxlength="40" value="{{ request.form.get('phone','') }}"></label>
+        <label>Address<input name="address" autocomplete="street-address" required maxlength="255" value="{{ request.form.get('address','') }}"></label>
+        <label>Username<input name="username" autocomplete="username" required minlength="3" maxlength="80" value="{{ request.form.get('username','') }}"></label>
+        <label>Password<input name="password" type="password" autocomplete="new-password" required minlength="12" maxlength="128"><small>Use at least 12 characters.</small></label>
+        <button class="btn btn-primary login-submit">Create account {{ icon('arrow',19) }}</button>
+      </form>
+      <p class="login-register">Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a></p>
+    </div>
+    <footer class="login-footer">{{ shop_name }} <span>·</span> Customer access</footer>
+  </section>
+</div>
+{% endblock %}

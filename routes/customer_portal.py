@@ -5,7 +5,8 @@ from werkzeug.security import generate_password_hash
 
 from database.db_connection import atomic, execute, row, rows
 from routes.auth import account_identity, validate_password
-from routes.common import Invalid, existing, field, get_or_404, new_key, notify_error, number, request_key, roles
+from routes.common import (Invalid, choice, existing, field, get_or_404, new_key, notify_error, number,
+                           request_key, roles)
 
 bp = Blueprint("customer_portal", __name__, url_prefix="/portal")
 
@@ -94,6 +95,99 @@ def index():
         "customer_portal/index.html", title="My workshop account", customer=customer, motorcycles=motorcycles,
         services=services, sales=sales, requests=requests, request_key=new_key(),
     )
+
+
+@bp.get("/shop")
+@roles("customer")
+def shop():
+    products = rows(
+        "SELECT p.id,p.name,p.brand,p.description,p.image_url,p.price,i.quantity,c.name AS category "
+        "FROM products p JOIN inventory i ON i.product_id=p.id "
+        "JOIN categories c ON c.id=p.category_id "
+        "WHERE p.active=TRUE AND i.quantity>0 ORDER BY c.name,p.name"
+    )
+    requests = rows(
+        "SELECT id,product_name,quantity,unit_price,status,created_at FROM purchase_requests "
+        "WHERE customer_id=%s ORDER BY id DESC LIMIT 20",
+        (current_user.customer_id,),
+    )
+    return render_template(
+        "customer_portal/shop.html", title="Shop", products=products, requests=requests,
+        request_keys={product["id"]: new_key() for product in products},
+    )
+
+
+@bp.post("/shop/<int:product_id>/request")
+@roles("customer")
+def request_purchase(product_id):
+    try:
+        key = request_key()
+        quantity = number("quantity", maximum=1000)
+        with atomic():
+            saved = row(
+                "SELECT id FROM purchase_requests WHERE request_key=%s AND customer_id=%s",
+                (key, current_user.customer_id),
+            )
+            if not saved:
+                product = existing(
+                    "SELECT p.id,p.name,p.price,i.quantity FROM products p "
+                    "JOIN inventory i ON i.product_id=p.id "
+                    "WHERE p.id=%s AND p.active=TRUE FOR UPDATE",
+                    (product_id,),
+                    "This item is no longer available.",
+                )
+                if product["quantity"] < quantity:
+                    raise Invalid(f"Only {product['quantity']} in stock for {product['name']}.")
+                execute(
+                    "INSERT INTO purchase_requests "
+                    "(request_key,customer_id,product_id,product_name,quantity,unit_price) "
+                    "VALUES (%s,%s,%s,%s,%s,%s)",
+                    (key, current_user.customer_id, product_id, product["name"], quantity, product["price"]),
+                )
+        flash("Purchase request sent. The shop will confirm availability and payment with you.", "success")
+    except (Invalid, Error) as error:
+        notify_error(error)
+    return redirect(url_for("customer_portal.shop"))
+
+
+@bp.get("/purchase-requests")
+@roles("admin", "cashier")
+def purchase_requests():
+    requests = rows(
+        "SELECT r.id,r.product_name,r.quantity,r.unit_price,r.status,r.created_at,"
+        "c.id AS customer_id,c.name AS customer,c.phone "
+        "FROM purchase_requests r JOIN customers c ON c.id=r.customer_id "
+        "ORDER BY (r.status='Pending') DESC,r.created_at DESC"
+    )
+    return render_template("customer_portal/purchase_requests.html", title="Purchase requests", requests=requests)
+
+
+@bp.post("/purchase-requests/<int:request_id>/status")
+@roles("admin", "cashier")
+def update_purchase_request(request_id):
+    try:
+        status = choice("status", ("Confirmed", "Declined"))
+        with atomic():
+            item = get_or_404(
+                "SELECT status,product_id,quantity FROM purchase_requests WHERE id=%s FOR UPDATE",
+                (request_id,),
+            )
+            if item["status"] != "Pending":
+                raise Invalid("Only pending purchase requests can be updated.")
+            if status == "Confirmed":
+                product = existing(
+                    "SELECT p.active,p.name,i.quantity FROM products p "
+                    "JOIN inventory i ON i.product_id=p.id WHERE p.id=%s FOR UPDATE",
+                    (item["product_id"],),
+                    "This product is no longer available.",
+                )
+                if not product["active"] or product["quantity"] < item["quantity"]:
+                    raise Invalid(f"Not enough stock remains to confirm {product['name']}.")
+            execute("UPDATE purchase_requests SET status=%s WHERE id=%s", (status, request_id))
+        flash(f"Purchase request {status.lower()}.", "success")
+    except (Invalid, Error) as error:
+        notify_error(error)
+    return redirect(url_for("customer_portal.purchase_requests"))
 
 
 @bp.post("/requests")

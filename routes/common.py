@@ -25,7 +25,29 @@ PRODUCT_IMAGES = (
     "spark_plug.jpg",
     "sprocket_chain.jpg",
 )
-PRODUCT_IMAGE_URLS = tuple(f"/static/assets/parts/{name}" for name in PRODUCT_IMAGES)
+MOTORCYCLE_IMAGES = (
+    "naked_orange.jpg",
+    "scooter_black.jpg",
+    "scooter_blue.jpg",
+    "scooter_dark.jpg",
+    "scooter_gray.jpg",
+    "scooter_red.jpg",
+    "scooter_red_black.jpg",
+    "scooter_white.jpg",
+    "scooter_white_black.jpg",
+    "sport_black.jpg",
+    "sport_blue.jpg",
+    "sport_green.jpg",
+    "sport_red.jpg",
+    "standard_black.jpg",
+    "underbone_black.jpg",
+    "underbone_blue.jpg",
+    "underbone_red.jpg",
+    "underbone_white.jpg",
+)
+PRODUCT_IMAGE_URLS = tuple(f"/static/assets/parts/{name}" for name in PRODUCT_IMAGES) + tuple(
+    f"/static/assets/motorcycles/{name}" for name in MOTORCYCLE_IMAGES
+)
 
 
 class Invalid(ValueError):

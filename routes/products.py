@@ -63,7 +63,13 @@ def form(ident=None):
     return render_template("products/edit.html" if ident else "products/add.html", title="Edit product" if ident else "Add product",
                            entry=entry, categories=category_list(),
                            product_images=[
-                               {"url": url, "label": url.rsplit("/", 1)[-1].removesuffix(".jpg").replace("_", " ").title()}
+                               {
+                                   "url": url,
+                                   "label": (
+                                       f"{url.split('/')[-2].replace('_', ' ').title()} · "
+                                       f"{url.rsplit('/', 1)[-1].removesuffix('.jpg').replace('_', ' ').title()}"
+                                   ),
+                               }
                                for url in PRODUCT_IMAGE_URLS
                            ],
                            product_image_urls=PRODUCT_IMAGE_URLS)

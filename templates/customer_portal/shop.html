@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% from 'ui.html' import icon, header, empty, tag, csrf %}
+{% block content %}
+<div class="page-heading">{{ header('Shop','Browse products in stock. Request an item and the shop will confirm availability and payment.') }}</div>
+<div class="store-grid">
+  {% for item in products %}
+  <article class="panel store-card">
+    {% if item.image_url %}<img class="store-image" src="{{ item.image_url }}" alt="{{ item.name }}" loading="lazy">{% endif %}
+    <div class="store-copy"><small>{{ item.category }}</small><h2>{{ item.name }}</h2>
+      {% if item.brand %}<p>{{ item.brand }}</p>{% endif %}
+      {% if item.description %}<p>{{ item.description }}</p>{% endif %}
+      <strong class="store-price">{{ item.price|money }}</strong>
+      <small>{{ item.quantity }} in stock</small>
+      <form method="post" action="{{ url_for('customer_portal.request_purchase',product_id=item.id) }}" class="store-request">
+        {{ csrf(request_keys[item.id]) }}
+        <label>Quantity<input type="number" name="quantity" min="1" max="{{ item.quantity }}" value="1" required></label>
+        <button class="btn btn-primary">Request to buy</button>
+      </form>
+    </div>
+  </article>
+  {% else %}
+  <section class="panel store-empty">{{ empty('No products available yet','The shop has not listed any in-stock products for sale yet. Please check back soon.','box') }}</section>
+  {% endfor %}
+</div>
+<p class="panel-foot subtle">A request does not reserve stock or charge your account. Shop staff will confirm your order and arrange payment.</p>
+<section class="panel section-gap">
+  <div class="panel-head"><div><h2>Your purchase requests</h2><p>Items you asked the shop about</p></div></div>
+  {% if requests %}
+  <div class="table-scroll"><table><thead><tr><th>Item</th><th>Quantity</th><th>Unit price</th><th>Requested</th><th>Status</th></tr></thead><tbody>
+  {% for item in requests %}<tr><td><strong>{{ item.product_name }}</strong></td><td>{{ item.quantity }}</td><td>{{ item.unit_price|money }}</td><td>{{ item.created_at|shortdate }}</td><td>{{ tag(item.status) }}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}{{ empty('No purchase requests','Your requests will appear here.','receipt') }}{% endif %}
+</section>
+{% endblock %}

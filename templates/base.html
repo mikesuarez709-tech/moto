@@ -18,10 +18,11 @@
 <aside class="sidebar" id="navigation">
   <a class="brand" href="{{ url_for('customer_portal.index') if role=='customer' else url_for('dashboard.index') }}">{{ brand() }}</a>
   <nav class="navigation" aria-label="Main navigation">
-    {% set links = [('My account','dashboard','customer_portal.index',['customer']),('Dashboard','dashboard','dashboard.index',['admin','cashier','mechanic']),('Products','box','products.index',['admin']),('Inventory','inventory','inventory.index',['admin']),('Customers','users','customers.index',['admin','cashier']),('Customer requests','calendar','services.requests_index',['admin','cashier']),('Motorcycles','bike','motorcycles.index',['admin']),('Services','tools','services.index',['admin','mechanic']),('Mechanics','mechanic','mechanics.index',['admin']),('Transactions','receipt','transactions.index',['admin','cashier']),('Reports','chart','reports.index',['admin']),('User accounts','lock','auth.users',['admin'])] %}
+    {% set links = [('My account','dashboard','customer_portal.index',['customer']),('Shop','box','customer_portal.shop',['customer']),('Dashboard','dashboard','dashboard.index',['admin','cashier','mechanic']),('Products','box','products.index',['admin']),('Inventory','inventory','inventory.index',['admin']),('Customers','users','customers.index',['admin','cashier']),('Customer requests','calendar','services.requests_index',['admin','cashier']),('Purchase requests','receipt','customer_portal.purchase_requests',['admin','cashier']),('Motorcycles','bike','motorcycles.index',['admin']),('Services','tools','services.index',['admin','mechanic']),('Mechanics','mechanic','mechanics.index',['admin']),('Transactions','receipt','transactions.index',['admin','cashier']),('Reports','chart','reports.index',['admin']),('User accounts','lock','auth.users',['admin'])] %}
     <div class="nav-label">WORKSPACE</div>
     {% for label, glyph, endpoint, allowed in links if role in allowed %}
-    <a class="nav-link {{ 'current' if active==endpoint.split('.')[0] }}" href="{{ url_for(endpoint) }}" {% if active==endpoint.split('.')[0] %}aria-current="page"{% endif %}>{{ icon(glyph,19) }} <span>{{ label }}</span></a>
+    {% set selected = request.endpoint == endpoint if endpoint.startswith('customer_portal.') else active==endpoint.split('.')[0] %}
+    <a class="nav-link {{ 'current' if selected }}" href="{{ url_for(endpoint) }}" {% if selected %}aria-current="page"{% endif %}>{{ icon(glyph,19) }} <span>{{ label }}</span></a>
     {% endfor %}
   </nav>
   <div class="sidebar-footer"><div class="sidebar-account"><span class="avatar">{{ current_user.name[:2]|upper }}</span><span><strong>{{ current_user.name }}</strong><small>{{ 'Administrator' if role=='admin' else role|capitalize }}</small></span></div>

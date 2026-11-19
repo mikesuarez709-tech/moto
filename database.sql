@@ -196,3 +196,20 @@ CREATE TABLE IF NOT EXISTS payments (
     UNIQUE (service_id, method, reference),
     INDEX (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS purchase_requests (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    request_key CHAR(32) NOT NULL UNIQUE,
+    customer_id BIGINT UNSIGNED NOT NULL,
+    product_id BIGINT UNSIGNED NOT NULL,
+    product_name VARCHAR(120) NOT NULL,
+    quantity INT UNSIGNED NOT NULL CHECK (quantity > 0),
+    unit_price DECIMAL(12,2) NOT NULL CHECK (unit_price >= 0),
+    status ENUM('Pending','Confirmed','Declined') NOT NULL DEFAULT 'Pending',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(id),
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    INDEX (status, created_at),
+    INDEX (customer_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

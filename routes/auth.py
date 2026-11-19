@@ -100,6 +100,43 @@ def login():
     return render_template("login.html", title="Sign in")
 
 
+@bp.route("/register", methods=["GET", "POST"])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for("customer_portal.index") if current_user.role == "customer"
+                        else url_for("dashboard.index"))
+    if request.method == "POST":
+        try:
+            name, username = account_identity(field("name", 120), field("username", 80))
+            phone = field("phone", 40)
+            address = field("address", 255)
+            password = request.form.get("password", "")
+            validate_password(password)
+            if row("SELECT id FROM users WHERE username=%s", (username,)) or row(
+                "SELECT id FROM customer_accounts WHERE username=%s", (username,)
+            ):
+                raise Invalid("That username is already in use.")
+            with atomic():
+                customer_id = execute(
+                    "INSERT INTO customers (name,phone,address) VALUES (%s,%s,%s)",
+                    (name, phone, address),
+                )
+                account_id = execute(
+                    "INSERT INTO customer_accounts (customer_id,username,password_hash) VALUES (%s,%s,%s)",
+                    (customer_id, username, generate_password_hash(password)),
+                )
+            session.clear()
+            session.permanent = True
+            login_user(Account({
+                "id": account_id, "name": name, "username": username, "role": "customer",
+                "mechanic_id": None, "customer_id": customer_id, "session_version": 1,
+            }))
+            return redirect(url_for("customer_portal.index"))
+        except (Invalid, Error) as error:
+            notify_error(error)
+    return render_template("register.html", title="Create customer account")
+
+
 @bp.post("/logout")
 @login_required
 def logout():

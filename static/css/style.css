@@ -226,6 +226,21 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--deep-orange);marg
 .login-subtitle{margin-bottom:22px}
 .login-form{gap:15px}
 .login-form input{min-height:47px}
+.login-register{margin-top:18px;text-align:center;color:var(--muted)}
+.login-register a{color:var(--deep-orange);font-weight:700;text-decoration:underline;text-underline-offset:2px}
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:15px}
+.store-card{overflow:hidden}
+.store-image{display:block;width:100%;height:165px;object-fit:cover;background:#f5f4ef}
+.store-copy{display:grid;gap:8px;padding:15px}
+.store-copy>small:first-child{color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.store-copy h2{font-size:18px}
+.store-copy p{color:var(--muted)}
+.store-price{font-size:18px}
+.store-request{display:flex;align-items:end;gap:8px;margin-top:8px}
+.store-request label{flex:1}
+.store-request input{min-height:38px}
+.store-request .btn{white-space:nowrap}
+.store-empty{grid-column:1/-1}
 .password-field{display:flex;position:relative}
 .password-field input{width:100%;padding-right:44px}
 .password-field button{position:absolute;right:5px;top:5px;bottom:5px;display:grid;place-items:center;background:none;border:0;color:var(--muted);border-radius:6px;width:36px}
