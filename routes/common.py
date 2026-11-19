@@ -13,6 +13,19 @@ from database.db_connection import execute, row, rows
 METHODS = ("Cash", "GCash", "Bank Transfer")
 STATES = ("Pending", "In Progress", "Completed", "Cancelled")
 ROLES = ("admin", "cashier", "mechanic")
+PRODUCT_IMAGES = (
+    "air_filter.jpg",
+    "battery.jpg",
+    "brake_disc.jpg",
+    "brake_pads.jpg",
+    "engine_oil_filters.jpg",
+    "helmet.jpg",
+    "motorcycle_tire.jpg",
+    "riding_gloves.jpg",
+    "spark_plug.jpg",
+    "sprocket_chain.jpg",
+)
+PRODUCT_IMAGE_URLS = tuple(f"/static/assets/parts/{name}" for name in PRODUCT_IMAGES)
 
 
 class Invalid(ValueError):
@@ -90,6 +103,8 @@ def choice(name, allowed):
 def image_url():
     value = field("image_url", 500, required=False)
     if value:
+        if value in PRODUCT_IMAGE_URLS:
+            return value
         try:
             parsed = urlsplit(value)
             if parsed.scheme == "https" and parsed.hostname and not parsed.username and not parsed.password:

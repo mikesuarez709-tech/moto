@@ -143,6 +143,7 @@ input::placeholder,textarea::placeholder{color:#73766d}
 textarea{resize:vertical}
 label{display:grid;gap:5px;font-size:13px;color:#363832;font-weight:700}
 label small{color:var(--muted);font-size:11px;font-weight:400}
+.form-hint{display:block;color:var(--muted);font-size:11px;margin-top:4px}
 input[type=checkbox]{width:17px;height:17px;accent-color:var(--deep-orange);margin:0}
 .checkbox{display:flex;align-items:center;gap:7px;min-height:41px}
 .pagination{display:flex;justify-content:space-between;align-items:center;gap:5px;min-height:45px;padding:7px 15px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
@@ -150,6 +151,7 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--deep-orange);marg
 .product-cell{display:flex;align-items:center;gap:9px;min-width:140px}
 .product-cell img{border-radius:7px;object-fit:cover;background:#f5f4ef;flex:none}
 .product-cell .table-icon{margin:0}
+.product-image-preview{display:block;width:120px;height:90px;object-fit:cover;border:1px solid var(--line);border-radius:8px;margin-top:10px;background:#f5f4ef}
 .product-description{max-width:235px}
 .form-panel{padding:18px}
 .page-heading+.form-panel{max-width:895px}

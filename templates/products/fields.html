@@ -10,6 +10,16 @@
 {{ numeric('price','Selling price (₱)',entry.price|default(''),step='0.01',max='9999999999.99') }}
 {{ numeric('minimum','Minimum stock',entry.minimum|default(5),max='4000000000') }}
 <label class="wide">Description<textarea name="description" rows="4" maxlength="1000">{{ entry.description or '' }}</textarea></label>
-<div class="wide">{{ input('image_url','Image URL',entry.image_url|default(''),type='url',limit=500,required=false,hint='Optional HTTPS link to a product photo.') }}</div>
+<div class="wide">
+<label for="image_url">Product image (optional)
+<select id="image_url" name="image_url" data-product-image-select>
+  <option value="">No image</option>
+  {% if entry.image_url and entry.image_url not in product_image_urls %}<option value="{{ entry.image_url }}" selected>Keep current external image</option>{% endif %}
+  {% for image in product_images %}<option value="{{ image.url }}" {{ 'selected' if entry.image_url==image.url }}>{{ image.label }}</option>{% endfor %}
+</select>
+</label>
+<small class="form-hint">Choose an included parts image. You can also keep an existing external image.</small>
+<img data-product-image-preview src="{{ entry.image_url|default('') }}" alt="" class="product-image-preview" {% if not entry.image_url %}hidden{% endif %}>
+</div>
 </div>
 {% endblock %}

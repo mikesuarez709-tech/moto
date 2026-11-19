@@ -2,7 +2,8 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from mysql.connector import Error
 
 from database.db_connection import atomic, execute, row, rows
-from routes.common import Invalid, amount, existing, field, get_or_404, image_url, notify_error, number, pager, pattern, roles, search
+from routes.common import (Invalid, PRODUCT_IMAGE_URLS, amount, existing, field, get_or_404, image_url,
+                           notify_error, number, pager, pattern, roles, search)
 
 bp = Blueprint("products", __name__, url_prefix="/products")
 
@@ -60,7 +61,12 @@ def form(ident=None):
             notify_error(error)
             entry = {**entry, **request.form}
     return render_template("products/edit.html" if ident else "products/add.html", title="Edit product" if ident else "Add product",
-                           entry=entry, categories=category_list())
+                           entry=entry, categories=category_list(),
+                           product_images=[
+                               {"url": url, "label": url.rsplit("/", 1)[-1].removesuffix(".jpg").replace("_", " ").title()}
+                               for url in PRODUCT_IMAGE_URLS
+                           ],
+                           product_image_urls=PRODUCT_IMAGE_URLS)
 
 
 @bp.post("/<int:ident>/delete")

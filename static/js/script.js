@@ -44,6 +44,18 @@ password?.addEventListener("click", () => {
   password.setAttribute("aria-label", show ? "Hide password" : "Show password");
 });
 
+const productImageSelect = one("[data-product-image-select]");
+const productImagePreview = one("[data-product-image-preview]");
+if (productImageSelect && productImagePreview) {
+  const updateProductImagePreview = () => {
+    productImagePreview.hidden = !productImageSelect.value;
+    if (productImageSelect.value) productImagePreview.src = productImageSelect.value;
+    else productImagePreview.removeAttribute("src");
+  };
+  productImageSelect.addEventListener("change", updateProductImagePreview);
+  updateProductImagePreview();
+}
+
 const dialog = one("#confirm-dialog");
 let pendingForm;
 all("form[data-confirm]").forEach((form) => form.addEventListener("submit", (event) => {
